@@ -51,6 +51,26 @@ Source: [`src/client.py`](src/client.py)
 
 ---
 
+## Experimental Output
+
+### Fig. 6: E3 — Proxy Only (3 tests)
+Test 1: signed request via proxy succeeds (200 OK). Test 2: attacker bypasses proxy and connects directly to QNC (200 OK). Proxy log: only Test 1 is recorded; Test 2 is invisible to the proxy.
+
+![Fig. 6a](figures/Fig6_E3_test1_proxy_200ok.png)
+![Fig. 6b](figures/Fig6_E3_test2_bypass_200ok.png)
+![Fig. 6c](figures/Fig6_E3_qms_proxy_log.png)
+
+---
+
+### Fig. 7: E4 — Firewall + Proxy (3 tests)
+Test 1: direct QNC access refused by firewall. Test 2: unsigned proxy request rejected. Test 3: PQC-signed request succeeds (200 OK).
+
+![Fig. 7a](figures/Fig7_E4_test1_connection_refused.png)
+![Fig. 7b](figures/Fig7_E4_test2_no_sig_rejected.png)
+![Fig. 7c](figures/Fig7_E4_test3_signed_200ok.png)
+
+---
+
 ## Requirements
 
 - Python 3.10+
