@@ -101,6 +101,27 @@ Verification latency per round. All 100 rounds passed.
 
 ---
 
+### Fig. 12: SHIM Frame Timeline
+Wireshark capture showing SHIM key exchange frames (0xFC0F) preceding encrypted data frames (0xF800) by approximately 2 seconds.
+
+![Fig. 12](figures/Fig12_shim_timeline.png)
+
+---
+
+### Fig. 13: SHIM Key Rotation Periodicity
+SHIM key rotation captured over 11 minutes at 60.4 ± 0.0 second intervals.
+
+![Fig. 13](figures/Fig13_shim_rotation.png)
+
+---
+
+### Fig. 14: SHIM Hex Dump — CNET Mode
+CNET mode hex dump showing zeros in the UUID region at offset 0x0380, compared with QKD mode which contains ASCII-encoded key UUIDs.
+
+![Fig. 14](figures/Fig14_shim_uuid_cnet.png)
+
+---
+
 ## Requirements
 
 - Python 3.10+
