@@ -78,9 +78,9 @@ MOCK_ETSI_BACKEND = "http://127.0.0.1:8443"
 
 # Real ETSI backend (QKD system)
 REAL_ETSI_BACKEND = "https://192.168.10.101:443"
-ETSI_CERT = "ETSIA.pem"           # Client certificate
-ETSI_KEY = "ETSIA-key.pem"        # Client private key
-ETSI_CA = "ChrisCA.pem"           # CA certificate
+ETSI_CERT = "<CLIENT_CERT>"           # Client certificate
+ETSI_KEY = "<CLIENT_KEY>"        # Client private key
+ETSI_CA = "<CA_CERT>"           # CA certificate
 
 ALGORITHM = "ML-DSA-65"      # Dilithium3, NIST Level 3
 

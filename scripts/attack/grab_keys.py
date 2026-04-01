@@ -11,9 +11,9 @@ CERT_DIR = os.path.dirname(os.path.abspath(__file__))
 QNC_B = "https://192.168.10.106:443/api/v1/keys/192.168.10.111/enc_keys"
 KEYS_FILE = os.path.join(CERT_DIR, "grabbed_keys.json")
 
-ctx = ssl.create_default_context(cafile=os.path.join(CERT_DIR, "ChrisCA.pem"))
-ctx.load_cert_chain(os.path.join(CERT_DIR, "ETSIB.pem"),
-                    os.path.join(CERT_DIR, "ETSIB-key.pem"))
+ctx = ssl.create_default_context(cafile=os.path.join(CERT_DIR, "<CA_CERT>"))
+ctx.load_cert_chain(os.path.join(CERT_DIR, "<CLIENT_CERT>"),
+                    os.path.join(CERT_DIR, "<CLIENT_KEY>"))
 ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
 
