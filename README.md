@@ -80,6 +80,27 @@ Test 1: direct QNC access refused by firewall. Test 2: unsigned proxy request re
 
 ---
 
+### Fig. 9: PQC Proxy Overhead Raw Output (100 rounds)
+Raw terminal output comparing direct ETSI API access with PQC proxy access.
+
+![Fig. 9](figures/Fig9_proxy_comparison_raw.png)
+
+---
+
+### Fig. 10: Alice ML-DSA-65 Signing Benchmark (100 rounds)
+Signing latency per round through the CN4010 QKD-encrypted channel.
+
+![Fig. 10](figures/Fig10_benchmark_alice.png)
+
+---
+
+### Fig. 11: Bob ML-DSA-65 Verification Benchmark (100 rounds)
+Verification latency per round. All 100 rounds passed.
+
+![Fig. 11](figures/Fig11_benchmark_bob.png)
+
+---
+
 ## Requirements
 
 - Python 3.10+
