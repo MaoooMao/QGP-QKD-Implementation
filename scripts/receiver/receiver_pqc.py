@@ -28,17 +28,14 @@ while True:
         received += data
     conn.close()
 
-    # Unpack: [4-byte sig length][signature][message]
     sig_len = int.from_bytes(received[:4], 'big')
     signature = received[4:4+sig_len]
     message = received[4+sig_len:]
 
-    # Verify
     verifier = oqs.Signature(SIG_ALG)
     is_valid = verifier.verify(message, signature, public_key)
     status = "PASSED" if is_valid else "FAILED"
 
-    # Save received file
     out_path = os.path.join(SCRIPT_DIR, "received_file.pdf")
     with open(out_path, "wb") as f:
         f.write(message)

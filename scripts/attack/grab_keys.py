@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""Grab QKD keys from QNC B enc_keys API.
-Run on QMS server: python3 grab_keys.py
-Certs expected in same directory as this script (QKDserver/).
-Press Ctrl+C to stop and save.
-"""
+
 import ssl, json, time, os, signal, sys
 from urllib.request import Request, urlopen
 
@@ -42,7 +38,7 @@ while True:
         key = data["keys"][0]
         keys.append({"uuid": key["key_ID"], "key": key["key"],
                       "time": time.strftime('%H:%M:%S')})
-        print(f"#{len(keys)} [{keys[-1]['time']}] GOT: {key['key_ID'][:8]}... key={key['key'][:20]}...")
+        print(f"
     except Exception as e:
         print(f"[{time.strftime('%H:%M:%S')}] Error: {e}")
     time.sleep(0.5)

@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-"""
-QGP Key Generation Script
-
-Generates two keypairs for the Quantum Good Authentication Protocol:
-  1. ML-DSA-65 (Dilithium) — Alice signs, Bob verifies
-  2. ML-KEM-768 (Kyber)    — Alice encrypts to Bob, Bob decrypts
-"""
 
 import oqs
 import os
@@ -17,16 +10,14 @@ LEVELS = {
     5: ("ML-DSA-87", "ML-KEM-1024"),
 }
 
-
 def generate_keypair(level=3):
-    """Generate and save Dilithium + Kyber keypairs"""
+    
     sig_alg, kem_alg = LEVELS[level]
     print(f"Security Level: {level}")
     print(f"Signature: {sig_alg}, KEM: {kem_alg}\n")
 
     os.makedirs("keys", exist_ok=True)
 
-    # --- Dilithium (signing) ---
     signer = oqs.Signature(sig_alg)
     sig_public = signer.generate_keypair()
     sig_private = signer.export_secret_key()
@@ -40,7 +31,6 @@ def generate_keypair(level=3):
     print(f"  Public key:  {len(sig_public)} bytes -> keys/public.key")
     print(f"  Private key: {len(sig_private)} bytes -> keys/private.key")
 
-    # --- Kyber (encryption) ---
     kem = oqs.KeyEncapsulation(kem_alg)
     kem_public = kem.generate_keypair()
     kem_private = kem.export_secret_key()
@@ -57,7 +47,6 @@ def generate_keypair(level=3):
     print("\nKey distribution:")
     print("  Alice needs: keys/private.key + keys/kyber_public.key")
     print("  Bob needs:   keys/public.key  + keys/kyber_private.key")
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate QGP keypairs")

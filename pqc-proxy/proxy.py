@@ -1,21 +1,4 @@
 #!/usr/bin/env python3
-"""
-PQC Gateway Server
-
-This gateway sits between clients and the ETSI QKD API.
-It verifies Dilithium (ML-DSA-65) signatures on incoming requests
-before forwarding them to the backend ETSI server.
-
-Flow:
-    Client --> [PQC Gateway] --> ETSI API
-           signed request    verified & forwarded
-
-The gateway:
-1. Receives requests with PQC signatures
-2. Verifies the signature using the client's public key
-3. If valid, forwards the original request to ETSI API
-4. Returns the ETSI response to the client
-"""
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
@@ -28,15 +11,11 @@ import os
 import sys
 from datetime import datetime
 
-# =============================================================================
-# Auto-save: tee all output to log file
-# =============================================================================
-
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 LOG_FILE = os.path.join(SCRIPT_DIR, "gateway_log.txt")
 
 class Tee:
-    """Write to both stdout and a log file."""
+    
     def __init__(self, log_path):
         self.terminal = sys.stdout
         self.log = open(log_path, "a", encoding="utf-8")
@@ -54,7 +33,6 @@ class Tee:
 sys.stdout = Tee(LOG_FILE)
 sys.stderr = Tee(LOG_FILE)
 
-# Import liboqs for PQC verification
 try:
     import oqs
 except ImportError:
@@ -62,42 +40,28 @@ except ImportError:
     print("Run: pip install liboqs-python")
     exit(1)
 
-# =============================================================================
-# Configuration
-# =============================================================================
-
 GATEWAY_HOST = "0.0.0.0"
-GATEWAY_PORT = 8080          # Gateway listens here
+GATEWAY_PORT = 8080
 
-# Backend mode: "mock" or "real"
-# Set to "real" to connect to actual ETSI QKD API
 BACKEND_MODE = "real"
 
-# Mock ETSI backend (for testing without QKD)
 MOCK_ETSI_BACKEND = "http://127.0.0.1:8443"
 
-# Real ETSI backend (QKD system)
 REAL_ETSI_BACKEND = "https://192.168.10.101:443"
-ETSI_CERT = "<CLIENT_CERT>"           # Client certificate
-ETSI_KEY = "<CLIENT_KEY>"        # Client private key
-ETSI_CA = "<CA_CERT>"           # CA certificate
+ETSI_CERT = "<CLIENT_CERT>"
+ETSI_KEY = "<CLIENT_KEY>"
+ETSI_CA = "<CA_CERT>"
 
-ALGORITHM = "ML-DSA-65"      # Dilithium3, NIST Level 3
+ALGORITHM = "ML-DSA-65"
 
-PUBLIC_KEY_PATH = "keys/public.key"  # Client's public key for verification
+PUBLIC_KEY_PATH = "keys/public.key"
 
-# Replay protection: reject requests older than this (seconds)
 MAX_REQUEST_AGE = 60
 
-# Track used nonces to prevent replay attacks
 used_nonces = set()
 
-# =============================================================================
-# Load Public Key
-# =============================================================================
-
 def load_public_key():
-    """Load the client's public key for signature verification"""
+    
     if not os.path.exists(PUBLIC_KEY_PATH):
         print(f"ERROR: Public key not found at {PUBLIC_KEY_PATH}")
         print("Run keygen.py first to generate keys")
@@ -109,23 +73,8 @@ def load_public_key():
     print(f"Loaded public key: {len(public_key)} bytes")
     return public_key
 
-
-# =============================================================================
-# Signature Verification
-# =============================================================================
-
 def verify_signature(message: bytes, signature: bytes, public_key: bytes) -> bool:
-    """
-    Verify a Dilithium signature.
-
-    Args:
-        message: The original message that was signed (bytes)
-        signature: The signature to verify (bytes)
-        public_key: The signer's public key (bytes)
-
-    Returns:
-        True if signature is valid, False otherwise
-    """
+    
     try:
         verifier = oqs.Signature(ALGORITHM)
         return verifier.verify(message, signature, public_key)
@@ -133,35 +82,15 @@ def verify_signature(message: bytes, signature: bytes, public_key: bytes) -> boo
         print(f"Verification error: {e}")
         return False
 
-
 def verify_request(request_data: dict, public_key: bytes) -> tuple[bool, str]:
-    """
-    Verify a signed request from the client.
-
-    Expected request format:
-    {
-        "method": "GET" or "POST",
-        "path": "/api/v1/keys/...",
-        "body": { ... } or null,
-        "timestamp": "2026-02-03T10:00:00Z",
-        "nonce": "random-unique-string",
-        "signature": "hex-encoded-signature"
-    }
-
-    Returns:
-        (is_valid, error_message)
-    """
-    # 1. Check required fields
+    
     required_fields = ["method", "path", "timestamp", "nonce", "signature"]
     for field in required_fields:
         if field not in request_data:
             return False, f"Missing field: {field}"
 
-    # 2. Check timestamp (replay protection)
     try:
-        # Parse ISO format timestamp
         timestamp_str = request_data["timestamp"]
-        # Simple parsing: "2026-02-03T10:00:00Z"
         from datetime import datetime
         request_time = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
         now = datetime.now(request_time.tzinfo)
@@ -169,28 +98,23 @@ def verify_request(request_data: dict, public_key: bytes) -> tuple[bool, str]:
 
         if age > MAX_REQUEST_AGE:
             return False, f"Request too old: {age:.1f} seconds"
-        if age < -5:  # Allow 5 seconds clock skew
+        if age < -5:
             return False, f"Request from future: {age:.1f} seconds"
     except Exception as e:
         return False, f"Invalid timestamp: {e}"
 
-    # 3. Check nonce (prevent replay)
     nonce = request_data["nonce"]
     if nonce in used_nonces:
         return False, "Nonce already used (replay attack?)"
     used_nonces.add(nonce)
 
-    # Clean old nonces periodically (simple implementation)
     if len(used_nonces) > 10000:
         used_nonces.clear()
 
-    # 4. Reconstruct the signed message
-    # The client signs: method + path + body + timestamp + nonce
     body_str = json.dumps(request_data.get("body") or {}, sort_keys=True)
     message = f"{request_data['method']}|{request_data['path']}|{body_str}|{timestamp_str}|{nonce}"
     message_hash = hashlib.sha256(message.encode()).digest()
 
-    # 5. Decode and verify signature
     try:
         signature = bytes.fromhex(request_data["signature"])
     except ValueError:
@@ -201,35 +125,17 @@ def verify_request(request_data: dict, public_key: bytes) -> tuple[bool, str]:
 
     return True, "OK"
 
-
-# =============================================================================
-# Forward Request to ETSI Backend
-# =============================================================================
-
 def create_ssl_context():
-    """Create SSL context with client certificate for real ETSI"""
+    
     ctx = ssl.create_default_context()
     ctx.load_cert_chain(certfile=ETSI_CERT, keyfile=ETSI_KEY)
     ctx.load_verify_locations(cafile=ETSI_CA)
-    # Disable hostname verification for internal network
     ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE  # Self-signed certs on QKD system
+    ctx.verify_mode = ssl.CERT_NONE
     return ctx
 
-
 def forward_to_etsi(method: str, path: str, body: dict = None) -> tuple[int, dict]:
-    """
-    Forward a verified request to the ETSI backend.
-
-    Args:
-        method: HTTP method (GET or POST)
-        path: API path (e.g., /api/v1/keys/app1/status)
-        body: Request body for POST requests
-
-    Returns:
-        (status_code, response_data)
-    """
-    # Select backend based on mode
+    
     if BACKEND_MODE == "real":
         backend_url = REAL_ETSI_BACKEND
         ssl_context = create_ssl_context()
@@ -242,7 +148,7 @@ def forward_to_etsi(method: str, path: str, body: dict = None) -> tuple[int, dic
     try:
         if method == "GET":
             req = urllib.request.Request(url, method="GET")
-        else:  # POST
+        else:
             data = json.dumps(body or {}).encode()
             req = urllib.request.Request(
                 url,
@@ -269,19 +175,9 @@ def forward_to_etsi(method: str, path: str, body: dict = None) -> tuple[int, dic
     except Exception as e:
         return 500, {"error": f"Forward error: {str(e)}"}
 
-
-# =============================================================================
-# Gateway HTTP Handler
-# =============================================================================
-
 class GatewayHandler(BaseHTTPRequestHandler):
-    """
-    HTTP handler for the PQC Gateway.
-
-    All requests should be POST to /verify with a signed request body.
-    """
-
-    public_key = None  # Set after loading
+    
+    public_key = None
 
     def _set_headers(self, status_code=200):
         self.send_response(status_code)
@@ -293,18 +189,11 @@ class GatewayHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(data, indent=2).encode())
 
     def do_POST(self):
-        """
-        Handle POST requests.
-
-        Endpoint: POST /verify
-        Body: Signed request from client
-        """
-        # Only accept /verify endpoint
+        
         if self.path != "/verify":
             self._send_json({"error": "Use POST /verify"}, 404)
             return
 
-        # Read request body
         content_length = int(self.headers.get("Content-Length", 0))
         if content_length == 0:
             self._send_json({"error": "Empty request body"}, 400)
@@ -317,7 +206,6 @@ class GatewayHandler(BaseHTTPRequestHandler):
             self._send_json({"error": f"Invalid JSON: {e}"}, 400)
             return
 
-        # Verify signature
         start_time = time.time()
         is_valid, error_msg = verify_request(request_data, self.public_key)
         verify_time = (time.time() - start_time) * 1000
@@ -333,7 +221,6 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
         print(f"[VERIFIED] {request_data['method']} {request_data['path']} ({verify_time:.2f}ms)")
 
-        # Forward to ETSI backend
         forward_start = time.time()
         status_code, response_data = forward_to_etsi(
             request_data["method"],
@@ -344,7 +231,6 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
         print(f"[FORWARD] -> ETSI returned {status_code} ({forward_time:.2f}ms)")
 
-        # Add timing info to response
         response_data["_gateway_info"] = {
             "verify_time_ms": round(verify_time, 2),
             "forward_time_ms": round(forward_time, 2),
@@ -354,7 +240,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
         self._send_json(response_data, status_code)
 
     def do_GET(self):
-        """Health check endpoint"""
+        
         if self.path == "/health":
             self._send_json({
                 "status": "ok",
@@ -365,23 +251,15 @@ class GatewayHandler(BaseHTTPRequestHandler):
             self._send_json({"error": "Use POST /verify"}, 404)
 
     def log_message(self, format, *args):
-        """Custom log format"""
-        pass  # Suppress default logging, we do our own
-
-
-# =============================================================================
-# Main
-# =============================================================================
+        
+        pass
 
 def main():
-    # Load public key
     public_key = load_public_key()
     GatewayHandler.public_key = public_key
 
-    # Start server
     server = HTTPServer((GATEWAY_HOST, GATEWAY_PORT), GatewayHandler)
 
-    # Determine backend URL for display
     if BACKEND_MODE == "real":
         backend_display = f"{REAL_ETSI_BACKEND} (with TLS cert)"
     else:
@@ -407,7 +285,6 @@ def main():
     except KeyboardInterrupt:
         print("\nShutting down...")
         server.shutdown()
-
 
 if __name__ == "__main__":
     main()
