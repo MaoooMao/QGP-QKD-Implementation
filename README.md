@@ -51,6 +51,15 @@ Source: [`src/client.py`](src/client.py)
 
 ---
 
+## Architecture
+
+### Fig. 8: Defense-in-Depth Architecture
+Legitimate requests pass through both PQC signature verification and firewall IP check before reaching the QNC. Each attacker path is blocked by a different security layer.
+
+![Fig. 8](figures/Fig8_defense_proxy.png)
+
+---
+
 ## Experimental Output
 
 ### Fig. 6: E3 — Proxy Only (3 tests)
