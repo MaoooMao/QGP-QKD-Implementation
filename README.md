@@ -62,6 +62,13 @@ Legitimate requests pass through both PQC signature verification and firewall IP
 
 ## Experimental Output
 
+### Fig. 15: E2 — Firewall Only
+The SonicWall TZ350 firewall refuses the attacker's direct connection to QNC B (response time 1010 ms, TCP RST). The firewall's DENY rule blocks all traffic from non-whitelisted source addresses to the QNC ETSI 014 endpoints, while the ALLOW rules permit the two CN4010 encryptors' 60-second key rotation cycles to proceed uninterrupted.
+
+![Fig. 15](figures/Fig15_E2_firewall_deny.png)
+
+---
+
 ### Fig. 6: E3 — Proxy Only (3 tests)
 Test 1: signed request via proxy succeeds (200 OK). Test 2: attacker bypasses proxy and connects directly to QNC (200 OK). Proxy log: only Test 1 is recorded; Test 2 is invisible to the proxy.
 
