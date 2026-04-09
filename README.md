@@ -133,14 +133,3 @@ CNET mode hex dump showing zeros in the UUID region at offset 0x0380, compared w
 
 - Python 3.10+
 - [liboqs-python](https://github.com/open-quantum-safe/liboqs-python)
-
-## Citation
-
-```bibtex
-@article{mao2026qgp,
-  title={Implementation of QGP with Quantum Key and Post-Quantum Authentication},
-  author={Mao, Jianzhou and Xu, Guobin and Sakk, Eric and Wang, Shuangbao Paul},
-  journal={IEEE Journal on Selected Areas in Communications},
-  year={2026}
-}
-```
