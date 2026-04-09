@@ -2,7 +2,7 @@
 
 Source code and supplementary figures for:
 
-**"Implementation of QGP with Quantum Key and Post-Quantum Authentication"**
+**"Toward Verified Quantum-Safe Communication: Network Authentication with Quantum Key Encryption and Post-Quantum Signatures"**
 
 ## Code Listings
 
